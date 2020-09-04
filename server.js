@@ -21,7 +21,6 @@ if (process.env.ENVIRONMENT === 'development') {
     redis_url = "redis://127.0.0.1";
 }
 var redis = require("redis");
-let Redis = require('ioredis');
 var client = redis.createClient();
 
 
@@ -29,7 +28,7 @@ client.on("connect", function() {
     console.log("You are now connected on redis");
 });
 
-// define a simple route
+// API Endpoints
 app.post('/create-game', (req, res) => {
     let size = req.body.size
     size *= size
