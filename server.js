@@ -12,6 +12,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 // parse requests of content-type - application/json
 app.use(bodyParser.json())
 
+app.use(cors())
 
 //production redis url
 let redis_url = process.env.REDIS_URL;
@@ -49,8 +50,30 @@ app.post('/create-game', (req, res) => {
             coordinates: [x + 1, y],
         })
     }
-   
-    res.json({ });
+    client.get('games', (err, rep) => {
+        if (err) {
+            res.status(500).json({ err });
+            return;
+        }
+        let games = []
+        if (rep) {
+            games = JSON.parse(rep)
+        }
+        let identifier
+        do {
+            identifier = 'game-' + Math.floor(Math.random() * 99999999)
+        } while (games && games.find(game => game.identifier == identifier))
+
+        let playerShips = req.body.playerShips
+        games.push({
+            identifier,
+            enemyShips,
+            playerShips
+        })
+        client.set('games', JSON.stringify(games))
+        res.json({ identifier });
+
+    })
 
 });
 
