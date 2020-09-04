@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+require('dotenv').config();
 
 let cors = require('cors')
 
@@ -17,7 +18,6 @@ app.use(cors())
 //production redis url
 let redis_url = process.env.REDIS_URL;
 if (process.env.ENVIRONMENT === 'development') {
-    require('dotenv').config();
     redis_url = "redis://127.0.0.1";
 }
 var redis = require("redis");
@@ -63,7 +63,7 @@ app.post('/create-game', (req, res) => {
         do {
             identifier = 'game-' + Math.floor(Math.random() * 99999999)
         } while (games && games.find(game => game.identifier == identifier))
-
+        
         let playerShips = req.body.playerShips
         games.push({
             identifier,
@@ -74,10 +74,11 @@ app.post('/create-game', (req, res) => {
         res.json({ identifier });
 
     })
-
+    
 });
 
+const port = process.env.PORT || 3001
 // listen for requests
-app.listen(3001, () => {
-    console.log("Server is listening on port 3001");
+app.listen(port, () => {
+    console.log("Server is listening on port "+port);
 });
