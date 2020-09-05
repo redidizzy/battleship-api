@@ -94,10 +94,12 @@ app.post('/attack', (req, res, next) => {
             const game = games[gameIndex]
             if (!game) {
                 res.status(404).json({ err: `No game with identifier ${data.identifier} has been found !` });
+                return next()
             }
             const hasPlayerAttacked = game.playerAttacks.find(attack => attack.coordinates[0] == data.coordinates[0] && attack.coordinates[1] == data.coordinates[1])
             if (hasPlayerAttacked) {
                 res.status(400).json({ err: `You have already attacked in these coordinates` });
+                return next()
             }
             let playerAttack = { coordinates: data.coordinates }
             game.playerAttacks.push(playerAttack)
@@ -129,7 +131,7 @@ app.post('/attack', (req, res, next) => {
                 randomNumber = Math.floor(Math.random() * sqrSize + 1)
                 x = randomNumber % game.size + 1
                 y = Math.floor(randomNumber / game.size + 1)
-            } while (game.opponentAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y) || game.playerAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y) ||game.opponentShips.find(ship => ship.coordinates[0] == x && ship.coordinates[1] == y))
+            } while (game.opponentAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y) || game.playerAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y) || game.opponentShips.find(ship => ship.coordinates[0] == x && ship.coordinates[1] == y))
 
 
             let opponentAttack = { coordinates: [x, y] }
@@ -154,7 +156,30 @@ app.post('/attack', (req, res, next) => {
 
     })
 })
-
+app.get('/load-game', (req, res, next) => {
+    client.get('games', (err, rep) => {
+        if (err) {
+            res.status(500).json({ err });
+            return;
+        }
+        let games
+        if (rep) {
+            games = JSON.parse(rep)
+            const data = req.query
+            const game = games.find(g => g.identifier == data.identifier)
+            if (!game) {
+                res.status(404).json({ err: `No game with identifier ${data.identifier} has been found !` });
+                return next()
+            }
+            res.json({
+                actualPlayerShips : game.playerShips,
+                actualPlayerAttacks: game.playerAttacks,
+                opponentPlayerAttacks: game.opponentAttacks,
+            })
+            return next()
+        }
+    })
+})
 const port = process.env.PORT || 3001
     // listen for requests
 app.listen(port, () => {
