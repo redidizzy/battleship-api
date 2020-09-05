@@ -31,22 +31,22 @@ client.on("connect", function() {
 // API Endpoints
 app.post('/create-game', (req, res) => {
     let size = req.body.size
-    size *= size
-    let enemyShips = []
+    sqrSize = size * size
+    let opponentShips = []
     for (let i = 0; i < 3; i++) {
         let randomNumber
         let x
         let y
         do {
-            randomNumber = Math.floor(Math.random() * size + 1)
+            randomNumber = Math.floor(Math.random() * sqrSize + 1)
             x = randomNumber % size + 1
             y = randomNumber / size + 1
-        } while (x == 8 || enemyShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)))
-        enemyShips.push({
+        } while (x == 8 || opponentShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)))
+        opponentShips.push({
             alignment: 'horizontal',
             coordinates: [x, y],
         })
-        enemyShips.push({
+        opponentShips.push({
             alignment: 'horizontal',
             coordinates: [x + 1, y],
         })
@@ -68,10 +68,11 @@ app.post('/create-game', (req, res) => {
         let playerShips = req.body.playerShips
         games.push({
             identifier,
-            enemyShips,
+            opponentShips,
             playerShips,
-            playerAttacks,
-            enemyAttacks
+            enemyAttacks: [],
+            playerAttacks: [],
+            size
         })
         client.set('games', JSON.stringify(games))
         res.json({ identifier });
@@ -79,7 +80,74 @@ app.post('/create-game', (req, res) => {
     })
 
 });
+app.post('/attack', (req, res) => {
+    client.get('games', (err, rep) => {
+        if (err) {
+            res.status(500).json({ err });
+            return;
+        }
+        let games
+        if (rep) {
+            games = JSON.parse(rep)
+            const data = req.body
+            const game = games.find(g => g.identifier == data.identifier)
+            if (!game) {
+                res.status(404).json({ err: `No game with identifier ${data.identifier} has been found !` });
+            }
+            const hasPlayerAttacked = game.playerAttacks.find(attack => attack.coordinates[0] == data.coordinates[0] && attack.coordinates[1] == data.coordinates[1])
+            if (hasPlayerAttacked) {
+                res.status(400).json({ err: `You have already attacked in these coordinates` });
+            }
+            let playerAttack = { coordinates: data.coordinates }
+            game.playerAttacks.push(playerAttack)
+            if(game.opponentShips.find(ship => playerAttack.coordinates[0] == ship.coordinates[0] &&  playerAttack.coordinates[1] == ship.coordinates[1])){
+                playerAttack.hasTouchedOpponentShip = true
+            }else{
+                playerAttack.hasTouchedOpponentShip = true
+            }
 
+            // Verify if all the opponent's ships have been attacked, if so, finish the game
+            const hasPlayerWon = game.opponentShips.every(ship => game.playerAttacks.find(attack => attack.coordinates[0] == ship.coordinates[0] && attack.coordinates[1] == ship.coordinates[1]))
+            if (hasPlayerWon) {
+                const response = {
+                    hasPlayerWon,
+                    playerAttack
+                }
+                res.json(response)
+            }
+
+            // Generate opponent's attack
+            let randomNumber
+            let x
+            let y
+            let sqrSize = game.size * game.size
+            do {
+                randomNumber = Math.floor(Math.random() * sqrSize + 1)
+                x = randomNumber % game.size + 1
+                y = Math.floor(randomNumber / game.size + 1)
+            } while (game.enemyAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y))
+
+
+            let opponentAttack = { coordinates: [x, y] }
+            game.enemyAttacks.push(opponentAttack)
+                // Verify if opponent has attacked all player's ships
+            const hasOpponentWon = game.playerShips.every(ship => game.enemyAttacks.find(attack => attack.coordinates[0] == ship.coordinates[0] && attack.coordinates[1] == ship.coordinates[1]))
+
+            const response = {
+                opponentAttack,
+                playerAttack,
+                hasOpponentWon,
+                game
+            }
+            res.json(response)
+
+        } else {
+            res.status(404).json({ err: 'No game has been created yet !' });
+            return;
+        }
+
+    })
+})
 
 const port = process.env.PORT || 3001
     // listen for requests
