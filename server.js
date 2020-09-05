@@ -90,7 +90,8 @@ app.post('/attack', (req, res) => {
         if (rep) {
             games = JSON.parse(rep)
             const data = req.body
-            const game = games.find(g => g.identifier == data.identifier)
+            const gameIndex = games.findIndex(g => g.identifier == data.identifier)
+            const game = games[gameIndex]
             if (!game) {
                 res.status(404).json({ err: `No game with identifier ${data.identifier} has been found !` });
             }
@@ -100,9 +101,9 @@ app.post('/attack', (req, res) => {
             }
             let playerAttack = { coordinates: data.coordinates }
             game.playerAttacks.push(playerAttack)
-            if(game.opponentShips.find(ship => playerAttack.coordinates[0] == ship.coordinates[0] &&  playerAttack.coordinates[1] == ship.coordinates[1])){
+            if (game.opponentShips.find(ship => playerAttack.coordinates[0] == ship.coordinates[0] && playerAttack.coordinates[1] == ship.coordinates[1])) {
                 playerAttack.hasTouchedOpponentShip = true
-            }else{
+            } else {
                 playerAttack.hasTouchedOpponentShip = false
             }
 
@@ -113,6 +114,8 @@ app.post('/attack', (req, res) => {
                     hasPlayerWon,
                     playerAttack
                 }
+                games[gameIndex] = game
+                client.set('games', JSON.stringify(games))
                 res.json(response)
             }
 
@@ -133,6 +136,8 @@ app.post('/attack', (req, res) => {
                 // Verify if opponent has attacked all player's ships
             const hasOpponentWon = game.playerShips.every(ship => game.opponentAttacks.find(attack => attack.coordinates[0] == ship.coordinates[0] && attack.coordinates[1] == ship.coordinates[1]))
 
+            games[gameIndex] = game
+            client.set('games', JSON.stringify(games))
             const response = {
                 opponentAttack,
                 playerAttack,
