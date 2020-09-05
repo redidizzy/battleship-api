@@ -29,7 +29,7 @@ client.on("connect", function() {
 });
 
 // API Endpoints
-app.post('/create-game', (req, res) => {
+app.post('/create-game', (req, res, next) => {
     let size = req.body.size
     sqrSize = size * size
     let opponentShips = []
@@ -76,11 +76,11 @@ app.post('/create-game', (req, res) => {
         })
         client.set('games', JSON.stringify(games))
         res.json({ identifier });
-
+        return next()
     })
 
 });
-app.post('/attack', (req, res) => {
+app.post('/attack', (req, res, next) => {
     client.get('games', (err, rep) => {
         if (err) {
             res.status(500).json({ err });
@@ -117,6 +117,7 @@ app.post('/attack', (req, res) => {
                 games[gameIndex] = game
                 client.set('games', JSON.stringify(games))
                 res.json(response)
+                return next()
             }
 
             // Generate opponent's attack
@@ -145,10 +146,11 @@ app.post('/attack', (req, res) => {
                 game
             }
             res.json(response)
+            return next()
 
         } else {
             res.status(404).json({ err: 'No game has been created yet !' });
-            return;
+            return next()
         }
 
     })
