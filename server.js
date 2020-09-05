@@ -66,7 +66,6 @@ app.post('/create-game', (req, res, next) => {
             identifier = 'game-' + Math.floor(Math.random() * 99999999)
         } while (games && games.find(game => game.identifier == identifier))
 
-        let playerShips = req.body.playerShips
         games.push({
             identifier,
             opponentShips,
@@ -130,7 +129,7 @@ app.post('/attack', (req, res, next) => {
                 randomNumber = Math.floor(Math.random() * sqrSize + 1)
                 x = randomNumber % game.size + 1
                 y = Math.floor(randomNumber / game.size + 1)
-            } while (game.opponentAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y))
+            } while (game.opponentAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y) || game.playerAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y) ||game.opponentShips.find(ship => ship.coordinates[0] == x && ship.coordinates[1] == y))
 
 
             let opponentAttack = { coordinates: [x, y] }
