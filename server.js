@@ -143,7 +143,6 @@ app.post('/attack', (req, res, next) => {
                 opponentAttack,
                 playerAttack,
                 hasOpponentWon,
-                game
             }
             res.json(response)
             return next()
