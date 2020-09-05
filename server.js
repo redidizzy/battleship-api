@@ -40,7 +40,7 @@ app.post('/create-game', (req, res) => {
         do {
             randomNumber = Math.floor(Math.random() * sqrSize + 1)
             x = randomNumber % size + 1
-            y = randomNumber / size + 1
+            y = Math.floor(randomNumber / size + 1)
         } while (x == 8 || opponentShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)))
         opponentShips.push({
             alignment: 'horizontal',
@@ -70,7 +70,7 @@ app.post('/create-game', (req, res) => {
             identifier,
             opponentShips,
             playerShips,
-            enemyAttacks: [],
+            opponentAttacks: [],
             playerAttacks: [],
             size
         })
@@ -103,7 +103,7 @@ app.post('/attack', (req, res) => {
             if(game.opponentShips.find(ship => playerAttack.coordinates[0] == ship.coordinates[0] &&  playerAttack.coordinates[1] == ship.coordinates[1])){
                 playerAttack.hasTouchedOpponentShip = true
             }else{
-                playerAttack.hasTouchedOpponentShip = true
+                playerAttack.hasTouchedOpponentShip = false
             }
 
             // Verify if all the opponent's ships have been attacked, if so, finish the game
@@ -125,13 +125,13 @@ app.post('/attack', (req, res) => {
                 randomNumber = Math.floor(Math.random() * sqrSize + 1)
                 x = randomNumber % game.size + 1
                 y = Math.floor(randomNumber / game.size + 1)
-            } while (game.enemyAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y))
+            } while (game.opponentAttacks.find(attack => attack.coordinates[0] == x && attack.coordinates[1] == y))
 
 
             let opponentAttack = { coordinates: [x, y] }
-            game.enemyAttacks.push(opponentAttack)
+            game.opponentAttacks.push(opponentAttack)
                 // Verify if opponent has attacked all player's ships
-            const hasOpponentWon = game.playerShips.every(ship => game.enemyAttacks.find(attack => attack.coordinates[0] == ship.coordinates[0] && attack.coordinates[1] == ship.coordinates[1]))
+            const hasOpponentWon = game.playerShips.every(ship => game.opponentAttacks.find(attack => attack.coordinates[0] == ship.coordinates[0] && attack.coordinates[1] == ship.coordinates[1]))
 
             const response = {
                 opponentAttack,
