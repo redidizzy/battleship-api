@@ -32,6 +32,7 @@ client.on("connect", function() {
 app.post('/create-game', (req, res, next) => {
     let size = req.body.size
     sqrSize = size * size
+    let playerShips = req.body.playerShips
     let opponentShips = []
     for (let i = 0; i < 3; i++) {
         let randomNumber
@@ -41,7 +42,7 @@ app.post('/create-game', (req, res, next) => {
             randomNumber = Math.floor(Math.random() * sqrSize + 1)
             x = randomNumber % size + 1
             y = Math.floor(randomNumber / size + 1)
-        } while (x == 8 || opponentShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)))
+        } while (x == 8 || opponentShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)) || playerShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)))
         opponentShips.push({
             alignment: 'horizontal',
             coordinates: [x, y],
