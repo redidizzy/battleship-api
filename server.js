@@ -35,11 +35,13 @@ app.post('/create-game', (req, res) => {
     let enemyShips = []
     for (let i = 0; i < 3; i++) {
         let randomNumber
+        let x
+        let y
         do {
             randomNumber = Math.floor(Math.random() * size + 1)
-        } while (enemyShips.find(ship => ship.position == randomNumber || ship.position == randomNumber + 1) || randomNumber % size + 1 === 8)
-        let x = randomNumber % size + 1
-        let y = randomNumber / size + 1
+            x = randomNumber % size + 1
+            y = randomNumber / size + 1
+        } while (x == 8 || enemyShips.find(ship => ship.coordinates[1] == y && (ship.coordinates[0] == x + 1 || ship.coordinates[0] == x)))
         enemyShips.push({
             alignment: 'horizontal',
             coordinates: [x, y],
@@ -62,22 +64,25 @@ app.post('/create-game', (req, res) => {
         do {
             identifier = 'game-' + Math.floor(Math.random() * 99999999)
         } while (games && games.find(game => game.identifier == identifier))
-        
+
         let playerShips = req.body.playerShips
         games.push({
             identifier,
             enemyShips,
-            playerShips
+            playerShips,
+            playerAttacks,
+            enemyAttacks
         })
         client.set('games', JSON.stringify(games))
         res.json({ identifier });
 
     })
-    
+
 });
 
+
 const port = process.env.PORT || 3001
-// listen for requests
+    // listen for requests
 app.listen(port, () => {
-    console.log("Server is listening on port "+port);
+    console.log("Server is listening on port " + port);
 });
